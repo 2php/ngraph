@@ -125,8 +125,9 @@ NodeVector op::CrossEntropy2::decompose_op() const
         std::make_shared<op::v1::Reshape>(xe, reshape_pattern, false);
     xe_reshape = xe_reshape * mask;
     auto node_sum = std::make_shared<op::Sum>(one_hot_labels * input, ngraph::AxisSet{rank});
+    auto matchx = mask * node_sum;
 
-    return {mask, input.get_node_shared_ptr(), xe_reshape};
+    return {matchx, input.get_node_shared_ptr(), xe_reshape};
 }
 
 shared_ptr<Node> op::CrossEntropy2::copy_with_new_args(const NodeVector& new_args) const
