@@ -143,7 +143,7 @@ NodeVector op::CrossEntropy2::decompose_op() const
     std::cout << std::endl;
     auto node_sum = std::make_shared<op::Sum>(one_hot_labels * input, ngraph::AxisSet{rank});
 
-    auto node_mask_shape = mask->get_shape();
+    auto node_mask_shape = xe->get_shape();
     const auto reshape_sum_pattern =
         op::Constant::create(element::i64, Shape{node_mask_shape.size()}, node_mask_shape);
     std::shared_ptr<ngraph::Node> sum_reshape =
