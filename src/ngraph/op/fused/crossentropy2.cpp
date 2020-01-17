@@ -120,12 +120,27 @@ NodeVector op::CrossEntropy2::decompose_op() const
 
     auto target_shape = mask->get_shape();
 
+    std::cout << "XE"
+              << ": ";
+    for (auto& it : xe->get_shape())
+    {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl;
     const auto reshape_pattern =
         op::Constant::create(element::i64, Shape{target_shape.size()}, target_shape);
     std::shared_ptr<ngraph::Node> xe_reshape =
         std::make_shared<op::v1::Reshape>(xe, reshape_pattern, false);
+
     xe_reshape = xe_reshape * mask;
 
+    std::cout << "XE_RESHAPE 2"
+              << ": ";
+    for (auto& it : xe_reshape->get_shape())
+    {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl;
     auto node_sum = std::make_shared<op::Sum>(one_hot_labels * input, ngraph::AxisSet{rank});
 
     auto node_mask_shape = mask->get_shape();
@@ -134,6 +149,30 @@ NodeVector op::CrossEntropy2::decompose_op() const
     std::shared_ptr<ngraph::Node> sum_reshape =
         std::make_shared<op::v1::Reshape>(node_sum, reshape_sum_pattern, false);
     auto matchx = mask * sum_reshape;
+
+    std::cout << "NODE SUM"
+              << ": ";
+    for (auto& it : node_sum->get_shape())
+    {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "SUM_RESHAPE"
+              << ": ";
+    for (auto& it : sum_reshape->get_shape())
+    {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "MASK "
+              << ": ";
+    for (auto& it : mask->get_shape())
+    {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "MATCH X"
+              << ": ";
     for (auto& it : matchx->get_shape())
     {
         std::cout << it << " ";
