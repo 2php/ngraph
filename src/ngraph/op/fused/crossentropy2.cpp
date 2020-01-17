@@ -109,10 +109,11 @@ NodeVector op::CrossEntropy2::decompose_op() const
     auto one_hot_shape = input.get_shape();
     auto rank = one_hot_shape.size() - 1;
     auto label_shape = labels.get_shape();
-    std::shared_ptr<ngraph::Node> one_hot_labels = create_one_hot(labels, input);
 
+    std::shared_ptr<ngraph::Node> one_hot_labels = create_one_hot(labels, input);
     auto input_type = input.get_element_type();
     one_hot_labels = std::make_shared<op::Convert>(one_hot_labels, input_type);
+
     auto xe = create_xe(one_hot_labels, input);
     auto mask = create_mask(labels, xe, m_ignore_index);
     mask = std::make_shared<op::Convert>(mask, input_type);
@@ -124,16 +125,20 @@ NodeVector op::CrossEntropy2::decompose_op() const
     std::shared_ptr<ngraph::Node> xe_reshape =
         std::make_shared<op::v1::Reshape>(xe, reshape_pattern, false);
     xe_reshape = xe_reshape * mask;
-    
+
     auto node_sum = std::make_shared<op::Sum>(one_hot_labels * input, ngraph::AxisSet{rank});
 
-    auto node_sum_shape = mask->get_shape();
-    const auto reshape_mask_pattern =
-        op::Constant::create(element::i64, Shape{node_sum_shape.size()}, node_sum_shape);
-    std::shared_ptr<ngraph::Node> mask_reshape =
-        std::make_shared<op::v1::Reshape>(node_sum, reshape_mask_pattern, false);
-    auto matchx = mask * mask_reshape;
-
+    auto node_mask_shape = mask->get_shape();
+    const auto reshape_sum_pattern =
+        op::Constant::create(element::i64, Shape{node_mask_shape.size()}, node_mask_shape);
+    std::shared_ptr<ngraph::Node> sum_reshape =
+        std::make_shared<op::v1::Reshape>(node_sum, reshape_sum_pattern, false);
+    auto matchx = mask * sum_reshape;
+    for (auto& it : matchx->get_shape())
+    {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl;
     return {matchx, input.get_node_shared_ptr(), xe_reshape};
 }
 
@@ -285,11 +290,6 @@ NodeVector op::CrossEntropy2Backprop::decompose_op() const
 
     std::shared_ptr<ngraph::Node> one_hot_labels = create_one_hot(label, x);
     one_hot_labels = std::make_shared<op::Convert>(one_hot_labels, x_type);
-
-    // auto one_hot = std::make_shared<op::OneHot>(label, x_shape, rank);
-
-    // std::shared_ptr<ngraph::Node> one_hot_labels = std::make_shared<op::Convert>(one_hot,
-    // x_type);
 
     auto mask = create_mask(label, x, m_ignore_index);
     mask = std::make_shared<op::Convert>(mask, x_type);
