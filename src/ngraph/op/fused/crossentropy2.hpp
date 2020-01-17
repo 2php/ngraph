@@ -24,10 +24,9 @@ namespace ngraph
 {
     namespace op
     {
-        class CrossEntropy2 : public ngraph::op::util::FusedOp
+        class NGRAPH_API CrossEntropy2 : public ngraph::op::util::FusedOp
         {
         public:
-            NGRAPH_API
             static constexpr NodeTypeInfo type_info{"CrossEntropy2", 0};
             const NodeTypeInfo& get_type_info() const override { return type_info; }
             CrossEntropy2() = default;
